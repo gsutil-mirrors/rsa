@@ -23,19 +23,8 @@ Roberto Tamassia, 2002.
 __all__ = [ 'getprime', 'are_relatively_prime']
 
 import rsa.randnum
+import rsa.common
 
-def gcd(p, q):
-    """Returns the greatest common divisor of p and q
-
-    >>> gcd(48, 180)
-    12
-    """
-
-    while q != 0:
-        if p < q: (p,q) = (q,p)
-        (p,q) = (q, p % q)
-    return p
-    
 
 def jacobi(a, b):
     """Calculates the value of the Jacobi symbol (a/b) where both a and b are
@@ -137,7 +126,6 @@ def getprime(nbits):
 
         # Retry if not prime
 
-
 def are_relatively_prime(a, b):
     """Returns True if a and b are relatively prime, and False if they
     are not.
@@ -148,7 +136,7 @@ def are_relatively_prime(a, b):
     0
     """
 
-    d = gcd(a, b)
+    d = rsa.common.gcd(a, b)
     return (d == 1)
     
 if __name__ == '__main__':

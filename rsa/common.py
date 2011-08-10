@@ -69,6 +69,18 @@ def byte_size(number):
 
     return int(math.ceil(bit_size(number) / 8.0))
 
+def gcd(p, q):
+    """Returns the greatest common divisor of p and q
+
+    >>> gcd(48, 180)
+    12
+    """
+
+    while q != 0:
+        if p < q: (p,q) = (q,p)
+        (p,q) = (q, p % q)
+    return p
+    
 
 def extended_gcd(a, b):
     """Returns a tuple (r, i, j) such that r = gcd(a, b) = ia + jb
@@ -139,9 +151,9 @@ def crt(a_values, modulo_values):
         M_i = m // m_i
         inv = inverse(M_i, m_i)
 
-        x = (x + a_i * M_i * inv) % m
+        x += a_i * M_i * inv
 
-    return x
+    return x % m
 
 if __name__ == '__main__':
     import doctest

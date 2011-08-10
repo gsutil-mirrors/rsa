@@ -430,13 +430,8 @@ def find_p_q(nbits, getprime_func=rsa.prime.getprime, accurate=True):
     '''
     
     total_bits = nbits * 2
+    pbits = qbits = nbits
 
-    # Make sure that p and q aren't too close or the factoring programs can
-    # factor n.
-    shift = nbits // 16
-    pbits = nbits + shift
-    qbits = nbits - shift
-    
     # Choose the two initial primes
     log.debug('find_p_q(%i): Finding p', nbits)
     p = getprime_func(pbits)
@@ -453,12 +448,15 @@ def find_p_q(nbits, getprime_func=rsa.prime.getprime, accurate=True):
         if p == q:
             return False
 
-        if not accurate:
-            return True
+        if accurate:
+            # Make sure we have just the right amount of bits
+            found_size = rsa.common.bit_size(p * q)
+            if total_bits != found_size:
+                return False
 
-        # Make sure we have just the right amount of bits
-        found_size = rsa.common.bit_size(p * q)
-        return total_bits == found_size
+        # Make sure that gcd(p-1, q-1) = 2, for CRT
+        return rsa.common.gcd(p-1, q-1) == 2
+
 
     # Keep choosing other primes until they match our requirements.
     change_p = False
