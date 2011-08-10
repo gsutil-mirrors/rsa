@@ -58,3 +58,18 @@ def decrypt_int(cyphertext, dkey, n):
     message = pow(cyphertext, dkey, n)
     return message
 
+def decrypt_crt(cyphertext, priv_key):
+    '''Decrypts a cypher text using the private key.
+
+    :param cyphertext: integer that has to be decoded.
+    :param priv_key: :py:class:`rsa.PrivateKey` to decode with
+    '''
+
+    assert_int(cyphertext, 'cyphertext')
+    m1 = (cyphertext * priv_key.exp1) % priv_key.p
+    m2 = (cyphertext * priv_key.exp2) % priv_key.q
+    h = (priv_key.coef * (m1 - m2)) % priv_key.p
+    message = m2 + h * priv_key.q
+
+    return message
+
