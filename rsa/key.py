@@ -202,7 +202,11 @@ class PublicKey(AbstractKey):
 
     @classmethod
     def load_pkcs1_openssl_pem(cls, keyfile):
-        '''Loads a PKCS#1.5 PEM-encoded public key file from OpenSSL.
+        return cls.load_pkcs1_v2_1(keyfile)
+
+    @classmethod
+    def load_pkcs1_v2_1_pem(cls, keyfile):
+        '''Loads a PKCS#1 v2.1 PEM-encoded public key file.
         
         These files can be recognised in that they start with BEGIN PUBLIC KEY
         rather than BEGIN RSA PUBLIC KEY.
@@ -211,19 +215,23 @@ class PublicKey(AbstractKey):
         after the "-----END PUBLIC KEY-----" lines is ignored.
 
         @param keyfile: contents of a PEM-encoded file that contains the public
-            key, from OpenSSL.
+            key in PKCS#1 v2.1 format.
         @return: a PublicKey object
         '''
 
         der = rsa.pem.load_pem(keyfile, 'PUBLIC KEY')
-        return cls.load_pkcs1_openssl_der(der)
+        return cls.load_pkcs1_v2_1_der(der)
 
     @classmethod
     def load_pkcs1_openssl_der(cls, keyfile):
-        '''Loads a PKCS#1 DER-encoded public key file from OpenSSL.
+        return cls.load_pkcs1_v2_1_der(keyfile)
+
+    @classmethod
+    def load_pkcs1_v2_1_der(cls, keyfile):
+        '''Loads a PKCS#1 v2.1 DER-encoded public key file.
 
         @param keyfile: contents of a DER-encoded file that contains the public
-            key, from OpenSSL.
+            key in PKCS#1 v2.1 format.
         @return: a PublicKey object
         '''
     
@@ -234,7 +242,7 @@ class PublicKey(AbstractKey):
         (keyinfo, _) = decoder.decode(keyfile, asn1Spec=OpenSSLPubKey())
         
         if keyinfo['header']['oid'] != univ.ObjectIdentifier('1.2.840.113549.1.1.1'):
-            raise TypeError("This is not a DER-encoded OpenSSL-compatible public key")
+            raise TypeError("This is not a DER-encoded PKCS#1 v2.1 public key")
                 
         return cls._load_pkcs1_der(keyinfo['key'][1:])
         
