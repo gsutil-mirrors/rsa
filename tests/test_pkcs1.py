@@ -21,7 +21,7 @@ import unittest
 
 import rsa
 from rsa import pkcs1
-from rsa._compat import byte, b, is_bytes
+from rsa._compat import byte, is_bytes
 
 
 class BinaryTest(unittest.TestCase):
@@ -48,7 +48,8 @@ class BinaryTest(unittest.TestCase):
         a = encrypted[5]
         if is_bytes(a):
             a = ord(a)
-        encrypted = encrypted[:5] + byte(a + 1) + encrypted[6:]
+        altered_a = (a + 1) % 256
+        encrypted = encrypted[:5] + byte(altered_a) + encrypted[6:]
 
         self.assertRaises(pkcs1.DecryptionError, pkcs1.decrypt, encrypted,
                           self.priv)
@@ -72,27 +73,32 @@ class SignatureTest(unittest.TestCase):
     def test_sign_verify(self):
         """Test happy flow of sign and verify"""
 
-        message = b('je moeder')
-        print("\tMessage:   %r" % message)
-
+        message = b'je moeder'
         signature = pkcs1.sign(message, self.priv, 'SHA-256')
-        print("\tSignature: %r" % signature)
 
-        self.assertTrue(pkcs1.verify(message, signature, self.pub))
+        self.assertEqual('SHA-256', pkcs1.verify(message, signature, self.pub))
+
+    def test_find_signature_hash(self):
+        """Test happy flow of sign and find_signature_hash"""
+
+        message = b'je moeder'
+        signature = pkcs1.sign(message, self.priv, 'SHA-256')
+
+        self.assertEqual('SHA-256', pkcs1.find_signature_hash(signature, self.pub))
 
     def test_alter_message(self):
         """Altering the message should let the verification fail."""
 
-        signature = pkcs1.sign(b('je moeder'), self.priv, 'SHA-256')
+        signature = pkcs1.sign(b'je moeder', self.priv, 'SHA-256')
         self.assertRaises(pkcs1.VerificationError, pkcs1.verify,
-                          b('mijn moeder'), signature, self.pub)
+                          b'mijn moeder', signature, self.pub)
 
     def test_sign_different_key(self):
         """Signing with another key should let the verification fail."""
 
         (otherpub, _) = rsa.newkeys(512)
 
-        message = b('je moeder')
+        message = b'je moeder'
         signature = pkcs1.sign(message, self.priv, 'SHA-256')
         self.assertRaises(pkcs1.VerificationError, pkcs1.verify,
                           message, signature, otherpub)
@@ -105,3 +111,24 @@ class SignatureTest(unittest.TestCase):
         signature2 = pkcs1.sign(message, self.priv, 'SHA-1')
 
         self.assertEqual(signature1, signature2)
+
+    def test_split_hash_sign(self):
+        """Hashing and then signing should match with directly signing the message. """
+
+        message = b'je moeder'
+        msg_hash = pkcs1.compute_hash(message, 'SHA-256')
+        signature1 = pkcs1.sign_hash(msg_hash, self.priv, 'SHA-256')
+
+        # Calculate the signature using the unified method
+        signature2 = pkcs1.sign(message, self.priv, 'SHA-256')
+
+        self.assertEqual(signature1, signature2)
+
+    def test_hash_sign_verify(self):
+        """Test happy flow of hash, sign, and verify"""
+
+        message = b'je moeder'
+        msg_hash = pkcs1.compute_hash(message, 'SHA-224')
+        signature = pkcs1.sign_hash(msg_hash, self.priv, 'SHA-224')
+
+        self.assertTrue(pkcs1.verify(message, signature, self.pub))
